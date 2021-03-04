@@ -1,4 +1,5 @@
 import argparse
+
 import xarray as xr
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
@@ -8,11 +9,13 @@ import cmocean
 
 def convert_pr_units(darray):
     """Convert kg m-2 s-1 to mm day-1.
-    
+   
     Args:
       darray (xarray.DataArray): Precipitation data
    
     """
+   
+    assert darray.units == 'kg m-2 s-1', "Program assumes input units are kg m-2 s-1"
    
     darray.data = darray.data * 86400
     darray.attrs['units'] = 'mm/day'
@@ -22,23 +25,22 @@ def convert_pr_units(darray):
 
 def apply_mask(darray, sftlf_file, realm):
     """Mask ocean or land using a sftlf (land surface fraction) file.
-   
+    
     Args:
       darray (xarray.DataArray): Data to mask
       sftlf_file (str): Land surface fraction file
       realm (str): Realm to mask
-   
+    
     """
-  
+   
     dset = xr.open_dataset(sftlf_file)
-  
+    assert realm in ['land', 'ocean'], """Valid realms are 'land' or 'ocean'"""   
     if realm == 'land':
         masked_darray = darray.where(dset['sftlf'].data < 50)
     else:
         masked_darray = darray.where(dset['sftlf'].data > 50)   
    
     return masked_darray
-
 
 def create_plot(clim, model, season, gridlines=False, levels=None):
     """Plot the precipitation climatology.
@@ -109,3 +111,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
   
     main(args)
+
